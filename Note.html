@@ -847,4 +847,1058 @@
       background: rgba(15, 23, 42, 0.98);
       color: #e5e7eb;
       box-shadow: 0 10px 24px rgba(15, 23, 42, 1);
-  
+    }
+
+    .btn-danger {
+      background: rgba(239, 68, 68, 0.9);
+      color: #fef2f2;
+      box-shadow: 0 10px 26px rgba(127, 29, 29, 1);
+    }
+
+    /* Modals (PIN + confirm) */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(5px);
+      -webkit-backdrop-filter: blur(5px);
+      z-index: 50;
+      display: none;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-backdrop.visible {
+      display: flex;
+    }
+
+    .modal {
+      width: 84%;
+      max-width: 360px;
+      background: rgba(15, 23, 42, 0.98);
+      border-radius: 22px;
+      padding: 16px 16px 14px;
+      box-shadow: 0 16px 38px rgba(15, 23, 42, 1);
+      color: #e5e7eb;
+    }
+
+    .modal-title {
+      font-size: 15px;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+
+    .modal-text {
+      font-size: 13px;
+      color: rgba(148, 163, 184, 0.95);
+      margin-bottom: 12px;
+    }
+
+    .modal-pin-input {
+      width: 100%;
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.9);
+      background: rgba(15, 23, 42, 0.98);
+      padding: 8px 12px;
+      color: #e5e7eb;
+      font-size: 16px;
+      text-align: center;
+      letter-spacing: 0.4em;
+      margin-bottom: 14px;
+    }
+
+    .modal-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+
+    .pill-tag {
+      padding: 4px 8px;
+      border-radius: 999px;
+      background: rgba(15, 23, 42, 0.98);
+      color: rgba(148, 163, 184, 0.95);
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.18em;
+    }
+
+    /* Toast */
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: 90px;
+      transform: translateX(-50%) translateY(40px);
+      padding: 8px 16px;
+      border-radius: 999px;
+      background: rgba(15, 23, 42, 0.98);
+      color: #e5e7eb;
+      font-size: 12px;
+      box-shadow: 0 10px 24px rgba(15, 23, 42, 1);
+      opacity: 0;
+      pointer-events: none;
+      z-index: 100;
+      transition: opacity 0.2s ease-out, transform 0.2s ease-out;
+    }
+
+    .toast.visible {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    @media (max-width: 360px) {
+      .note-title-input { font-size: 16px; }
+      .note-content-editable { min-height: 220px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-root">
+    <!-- MAIN APP BAR -->
+    <header class="app-bar">
+      <button class="icon-button surface" id="menuButton" aria-label="Open settings">
+        <i class="fas fa-bars"></i>
+      </button>
+      <div class="app-bar-title">
+        <div class="app-bar-title-main">Notes</div>
+        <div class="app-bar-title-sub">Offline · Secure · Minimal</div>
+      </div>
+      <div class="app-bar-actions">
+        <button class="icon-button surface" id="viewToggleButton" aria-label="Toggle view">
+          <i class="fas fa-list" id="viewToggleIcon"></i>
+        </button>
+        <button class="icon-button surface" aria-label="Focus search" id="searchFocusButton">
+          <i class="fas fa-magnifying-glass"></i>
+        </button>
+      </div>
+    </header>
+
+    <!-- SEARCH -->
+    <div class="search-container">
+      <div class="search-bar">
+        <i class="fas fa-magnifying-glass search-icon"></i>
+        <input id="searchInput" class="search-input" type="text" placeholder="Search notes..." />
+      </div>
+    </div>
+
+    <!-- HOME SCREEN -->
+    <main class="screen" id="notesScreen">
+      <div class="notes-header-row">
+        <div class="notes-header-title">All Notes</div>
+        <div style="display:flex;align-items:center;gap:4px;">
+          <span class="view-toggle-label">View</span>
+          <div class="pill-tag" id="viewModeLabel">List</div>
+        </div>
+      </div>
+
+      <section id="notesContainer" class="notes-container list-view"></section>
+
+      <section class="empty-state" id="emptyState">
+        <div class="empty-state-icon">
+          <i class="fa-solid fa-note-sticky"></i>
+        </div>
+        <div class="empty-state-title">No notes yet</div>
+        <div class="empty-state-text">
+          Tap the button below to create your first note.
+        </div>
+      </section>
+    </main>
+
+    <!-- FAB -->
+    <button class="fab" id="fabAdd" aria-label="Create note">
+      <i class="fas fa-plus"></i>
+    </button>
+
+    <!-- DRAWER -->
+    <div class="drawer-backdrop" id="drawerBackdrop"></div>
+    <aside class="drawer" id="settingsDrawer" aria-label="Settings">
+      <div class="drawer-header">
+        <div class="drawer-title">Settings &amp; Tools</div>
+        <div class="drawer-subtitle">Personalize your experience</div>
+      </div>
+
+      <div class="drawer-section-title">Appearance</div>
+      <div class="drawer-section">
+        <div class="drawer-item">
+          <div class="drawer-item-left">
+            <div class="drawer-item-title">Dark Mode</div>
+            <div class="drawer-item-sub">Switch between light & dark themes.</div>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="themeToggle" />
+            <span class="slider"></span>
+          </label>
+        </div>
+      </div>
+
+      <div class="drawer-section-title">Security</div>
+      <div class="drawer-section">
+        <div class="drawer-item" style="flex-direction:column;align-items:flex-start;">
+          <div class="drawer-item-left">
+            <div class="drawer-item-title">Note Lock PIN</div>
+            <div class="drawer-item-sub" id="pinStatusText">
+              No PIN set. Enter a new PIN to create one.
+            </div>
+          </div>
+          <div class="pin-controls">
+            <div class="pin-input-row">
+              <input id="pinCurrentInput" class="pin-input" type="password" inputmode="numeric" maxlength="4" placeholder="Current PIN" />
+              <input id="pinNewInput" class="pin-input" type="password" inputmode="numeric" maxlength="4" placeholder="New PIN" />
+            </div>
+            <div class="pin-btn-row">
+              <button class="btn btn-primary" id="btnSetPin">
+                <i class="fas fa-lock"></i> Set / Change PIN
+              </button>
+              <button class="btn btn-secondary" id="btnTestPin">
+                <i class="fas fa-key"></i> Test PIN
+              </button>
+              <button class="btn btn-danger" id="btnClearPin">
+                <i class="fas fa-trash"></i> Clear PIN
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="drawer-section-title">About</div>
+      <p class="about-text">
+        Notes are stored locally in this browser. Lock sensitive notes with a PIN and switch themes anytime.
+      </p>
+    </aside>
+
+    <!-- EDITOR SCREEN -->
+    <section class="editor-screen" id="editorScreen" aria-label="Note editor">
+      <header class="app-bar editor-bar">
+        <button class="icon-button surface" id="editorBackButton" aria-label="Save and go back">
+          <i class="fas fa-arrow-left"></i>
+        </button>
+        <div class="app-bar-title">
+          <div class="app-bar-title-main" id="editorTitleBarText">New Note</div>
+          <div class="app-bar-title-sub" id="editorSubTitle">Auto-saves on exit</div>
+        </div>
+        <div class="app-bar-actions">
+          <button class="icon-button surface" id="lockToggleButton" aria-label="Toggle lock">
+            <i class="fas fa-lock-open" id="lockToggleIcon"></i>
+          </button>
+          <button class="icon-button surface" id="exportButton" aria-label="Export note">
+            <i class="fas fa-arrow-up-right-from-square"></i>
+          </button>
+          <button class="icon-button surface" id="deleteButton" aria-label="Delete note">
+            <i class="fas fa-trash"></i>
+          </button>
+          <button class="icon-button surface" id="colorPickerButton" aria-label="Choose color">
+            <i class="fas fa-palette"></i>
+          </button>
+        </div>
+      </header>
+
+      <div class="editor-content">
+        <div class="editor-sheet">
+          <div class="editor-status-row">
+            <div class="editor-status-left">
+              <span class="status-dot"></span>
+              <span class="status-chip" id="editorModeLabel">New note</span>
+            </div>
+            <span class="status-chip soft" id="editorLockHint">Not locked</span>
+          </div>
+
+          <input id="noteTitleInput" class="note-title-input" placeholder="Note title" />
+
+          <div class="format-toolbar">
+            <button class="format-button" id="boldButton" type="button">
+              <span>B</span>
+            </button>
+            <button class="format-button" id="italicButton" type="button">
+              <span style="font-style:italic;">I</span>
+            </button>
+          </div>
+
+          <div class="editor-copy-row">
+            <button class="btn btn-secondary copy-note-btn" id="copyNoteButton">
+              <i class="fas fa-copy"></i>
+              Copy
+            </button>
+          </div>
+
+          <div
+            id="noteContentEditable"
+            class="note-content-editable"
+            contenteditable="true"
+            data-placeholder="Start typing your note..."
+          ></div>
+        </div>
+      </div>
+
+      <!-- Color palette -->
+      <div class="color-popover" id="colorPopover">
+        <div class="color-dot" data-color="red" style="background:var(--note-red);"></div>
+        <div class="color-dot" data-color="yellow" style="background:var(--note-yellow);"></div>
+        <div class="color-dot" data-color="green" style="background:var(--note-green);"></div>
+        <div class="color-dot" data-color="blue" style="background:var(--note-blue);"></div>
+        <div class="color-dot" data-color="purple" style="background:var(--note-purple);"></div>
+      </div>
+    </section>
+
+    <!-- PIN MODAL -->
+    <div class="modal-backdrop" id="pinModalBackdrop">
+      <div class="modal">
+        <div class="modal-title" id="pinModalTitle">Enter PIN</div>
+        <div class="modal-text" id="pinModalMessage">
+          Please confirm your 4-digit PIN to continue.
+        </div>
+        <input id="pinModalInput" class="modal-pin-input" type="password" inputmode="numeric" maxlength="4" placeholder="••••" />
+        <div class="modal-actions">
+          <button class="btn btn-secondary" id="pinModalCancel">Cancel</button>
+          <button class="btn btn-primary" id="pinModalConfirm">Confirm</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- DELETE CONFIRM MODAL (app-style) -->
+    <div class="modal-backdrop" id="confirmModalBackdrop">
+      <div class="modal">
+        <div class="modal-title" id="confirmModalTitle">Delete note</div>
+        <div class="modal-text" id="confirmModalMessage">
+          Delete this note permanently?
+        </div>
+        <div class="modal-actions">
+          <button class="btn btn-secondary" id="confirmModalCancel">Cancel</button>
+          <button class="btn btn-danger" id="confirmModalConfirm">Delete</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast" id="toast">Copied</div>
+  </div>
+
+  <script>
+    const STORAGE_KEYS = {
+      NOTES: "notesApp_notes",
+      THEME: "notesApp_theme",
+      VIEW_MODE: "notesApp_viewMode",
+      PIN_HASH: "notesApp_pinHash"
+    };
+
+    let notes = [];
+    let currentNoteId = null;
+    let currentViewMode = "list";
+    let currentTheme = "light";
+    let pinHash = null;
+    let toastTimeout = null;
+
+    function generateId() {
+      return "note_" + Date.now() + "_" + Math.random().toString(36).slice(2, 8);
+    }
+
+    function formatDate(ts) {
+      const d = new Date(ts);
+      if (Number.isNaN(d.getTime())) return "";
+      return d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+    }
+
+    function getColorValue(key) {
+      const root = getComputedStyle(document.documentElement);
+      const map = {
+        red: "--note-red",
+        yellow: "--note-yellow",
+        green: "--note-green",
+        blue: "--note-blue",
+        purple: "--note-purple"
+      };
+      const varName = map[key] || "--note-blue";
+      return root.getPropertyValue(varName).trim();
+    }
+
+    function htmlToPlainText(html) {
+      const div = document.createElement("div");
+      div.innerHTML = html || "";
+      return div.textContent || div.innerText || "";
+    }
+
+    function loadFromLocalStorage() {
+      try {
+        const rawNotes = localStorage.getItem(STORAGE_KEYS.NOTES);
+        notes = rawNotes ? JSON.parse(rawNotes) : [];
+        if (!Array.isArray(notes)) notes = [];
+      } catch { notes = []; }
+
+      try {
+        const rawTheme = localStorage.getItem(STORAGE_KEYS.THEME);
+        currentTheme = rawTheme === "dark" ? "dark" : "light";
+      } catch { currentTheme = "light"; }
+
+      try {
+        const rawView = localStorage.getItem(STORAGE_KEYS.VIEW_MODE);
+        currentViewMode = rawView === "card" ? "card" : "list";
+      } catch { currentViewMode = "list"; }
+
+      try {
+        pinHash = localStorage.getItem(STORAGE_KEYS.PIN_HASH) || null;
+      } catch { pinHash = null; }
+    }
+
+    function saveNotesToLocalStorage() {
+      try { localStorage.setItem(STORAGE_KEYS.NOTES, JSON.stringify(notes)); } catch {}
+    }
+
+    function saveThemeToLocalStorage() {
+      try { localStorage.setItem(STORAGE_KEYS.THEME, currentTheme); } catch {}
+    }
+
+    function saveViewModeToLocalStorage() {
+      try { localStorage.setItem(STORAGE_KEYS.VIEW_MODE, currentViewMode); } catch {}
+    }
+
+    function savePinHashToLocalStorage() {
+      try {
+        if (pinHash) localStorage.setItem(STORAGE_KEYS.PIN_HASH, pinHash);
+        else localStorage.removeItem(STORAGE_KEYS.PIN_HASH);
+      } catch {}
+    }
+
+    function showToast(message) {
+      const toast = document.getElementById("toast");
+      toast.textContent = message;
+      toast.classList.add("visible");
+      if (toastTimeout) clearTimeout(toastTimeout);
+      toastTimeout = setTimeout(() => {
+        toast.classList.remove("visible");
+      }, 1600);
+    }
+
+    async function hashPin(pin) {
+      const text = "notes-app-salt::" + pin;
+      if (window.crypto?.subtle && window.TextEncoder) {
+        try {
+          const data = new TextEncoder().encode(text);
+          const digest = await crypto.subtle.digest("SHA-256", data);
+          return Array.from(new Uint8Array(digest))
+            .map(b => b.toString(16).padStart(2,"0")).join("");
+        } catch {}
+      }
+      let hash = 0;
+      for (let c of text) hash = (hash * 31 + c.charCodeAt(0)) | 0;
+      return "fallback_" + Math.abs(hash).toString(16);
+    }
+
+    async function setPin(pin) {
+      if (!/^\d{4}$/.test(pin)) { alert("PIN must be exactly 4 digits."); return false; }
+      pinHash = await hashPin(pin);
+      savePinHashToLocalStorage();
+      return true;
+    }
+
+    async function verifyPin(pin) {
+      if (!pinHash) return false;
+      const candidate = await hashPin(pin);
+      return candidate === pinHash;
+    }
+
+    function hasPin() { return !!pinHash; }
+
+    function openPinModal({ title, message }) {
+      const backdrop = document.getElementById("pinModalBackdrop");
+      const titleEl = document.getElementById("pinModalTitle");
+      const msgEl = document.getElementById("pinModalMessage");
+      const inputEl = document.getElementById("pinModalInput");
+      const cancelBtn = document.getElementById("pinModalCancel");
+      const confirmBtn = document.getElementById("pinModalConfirm");
+
+      titleEl.textContent = title || "Enter PIN";
+      msgEl.textContent = message || "Please confirm your 4-digit PIN to continue.";
+      inputEl.value = "";
+      backdrop.classList.add("visible");
+      inputEl.focus();
+
+      return new Promise(resolve => {
+        const cleanup = () => {
+          backdrop.classList.remove("visible");
+          cancelBtn.removeEventListener("click", onCancel);
+          confirmBtn.removeEventListener("click", onConfirm);
+          inputEl.removeEventListener("keydown", onKey);
+        };
+        const onCancel = () => { cleanup(); resolve(null); };
+        const onConfirm = () => { const val = inputEl.value.trim(); cleanup(); resolve(val || null); };
+        const onKey = e => {
+          if (e.key === "Enter") { e.preventDefault(); onConfirm(); }
+          else if (e.key === "Escape") { e.preventDefault(); onCancel(); }
+        };
+        cancelBtn.addEventListener("click", onCancel);
+        confirmBtn.addEventListener("click", onConfirm);
+        inputEl.addEventListener("keydown", onKey);
+      });
+    }
+
+    function openConfirmModal({ title, message, confirmLabel, cancelLabel }) {
+      const backdrop = document.getElementById("confirmModalBackdrop");
+      const titleEl = document.getElementById("confirmModalTitle");
+      const msgEl = document.getElementById("confirmModalMessage");
+      const cancelBtn = document.getElementById("confirmModalCancel");
+      const confirmBtn = document.getElementById("confirmModalConfirm");
+
+      titleEl.textContent = title || "Confirm";
+      msgEl.textContent = message || "";
+      cancelBtn.textContent = cancelLabel || "Cancel";
+      confirmBtn.textContent = confirmLabel || "OK";
+
+      backdrop.classList.add("visible");
+
+      return new Promise(resolve => {
+        const cleanup = () => {
+          backdrop.classList.remove("visible");
+          cancelBtn.removeEventListener("click", onCancel);
+          confirmBtn.removeEventListener("click", onConfirm);
+          backdrop.removeEventListener("click", onBackdrop);
+        };
+        const onCancel = () => { cleanup(); resolve(false); };
+        const onConfirm = () => { cleanup(); resolve(true); };
+        const onBackdrop = e => {
+          if (e.target === backdrop) onCancel();
+        };
+        cancelBtn.addEventListener("click", onCancel);
+        confirmBtn.addEventListener("click", onConfirm);
+        backdrop.addEventListener("click", onBackdrop);
+      });
+    }
+
+    function showEditor() {
+      document.getElementById("editorScreen").classList.add("visible");
+      document.body.classList.add("editor-open");
+    }
+    function hideEditor() {
+      document.getElementById("editorScreen").classList.remove("visible");
+      document.body.classList.remove("editor-open");
+    }
+
+    function applyTheme() {
+      document.body.dataset.theme = currentTheme;
+      document.getElementById("themeToggle").checked = currentTheme === "dark";
+    }
+
+    function applyViewModeUI() {
+      const container = document.getElementById("notesContainer");
+      const icon = document.getElementById("viewToggleIcon");
+      const label = document.getElementById("viewModeLabel");
+      container.classList.remove("list-view","card-view");
+      if (currentViewMode === "card") {
+        container.classList.add("card-view");
+        icon.classList.remove("fa-list"); icon.classList.add("fa-border-all");
+        label.textContent = "Cards";
+      } else {
+        container.classList.add("list-view");
+        icon.classList.remove("fa-border-all"); icon.classList.add("fa-list");
+        label.textContent = "List";
+      }
+    }
+
+    function updatePinStatusText() {
+      const el = document.getElementById("pinStatusText");
+      el.textContent = hasPin()
+        ? "PIN is active. Enter your current PIN to change or clear it."
+        : "No PIN set. Enter a new PIN to create one.";
+    }
+
+    function getFilteredNotes() {
+      const q = document.getElementById("searchInput").value.trim().toLowerCase();
+      const sorted = notes.slice().sort((a,b) => b.updatedAt - a.updatedAt);
+      if (!q) return sorted;
+      return sorted.filter(n => {
+        const title = (n.title || "").toLowerCase();
+        const text = htmlToPlainText(n.contentHtml || "").toLowerCase();
+        return title.includes(q) || text.includes(q);
+      });
+    }
+
+    function renderNotesList() {
+      const container = document.getElementById("notesContainer");
+      const emptyState = document.getElementById("emptyState");
+      container.innerHTML = "";
+      const data = getFilteredNotes();
+
+      if (!data.length) {
+        emptyState.style.display = "block";
+        return;
+      }
+      emptyState.style.display = "none";
+
+      data.forEach(note => {
+        const item = document.createElement("article");
+        item.className = "note-item";
+        item.dataset.id = note.id;
+
+        const colorBar = document.createElement("div");
+        colorBar.className = "note-color-bar";
+        colorBar.style.background = getColorValue(note.color || "blue");
+
+        const main = document.createElement("div");
+        main.className = "note-main";
+
+        const title = document.createElement("div");
+        title.className = "note-title";
+        title.textContent = note.title || "(Untitled note)";
+        main.appendChild(title);
+
+        const preview = document.createElement("div");
+        preview.className = "note-content-preview";
+        preview.textContent = note.locked
+          ? "Locked content"
+          : htmlToPlainText(note.contentHtml || "").trim();
+        main.appendChild(preview);
+
+        const meta = document.createElement("div");
+        meta.className = "note-meta-row";
+        const dateSpan = document.createElement("span");
+        dateSpan.className = "note-date";
+        const dateIcon = document.createElement("i");
+        dateIcon.className = "fas fa-clock";
+        dateSpan.appendChild(dateIcon);
+        const dateText = document.createElement("span");
+        dateText.textContent = formatDate(note.updatedAt || note.createdAt);
+        dateSpan.appendChild(dateText);
+        meta.appendChild(dateSpan);
+
+        const lockIconSpan = document.createElement("span");
+        lockIconSpan.innerHTML = note.locked
+          ? '<i class="fas fa-lock"></i>' : '<i class="fas fa-lock-open"></i>';
+        meta.appendChild(lockIconSpan);
+        main.appendChild(meta);
+
+        item.appendChild(colorBar);
+        item.appendChild(main);
+
+        if (note.locked) {
+          const badge = document.createElement("div");
+          badge.className = "note-lock-badge";
+          badge.innerHTML = '<i class="fas fa-lock"></i> LOCKED';
+          item.appendChild(badge);
+        }
+
+        item.addEventListener("click", async () => {
+          if (note.locked) {
+            if (!hasPin()) {
+              alert("This note is locked, but no PIN is configured. Please set a PIN in Settings first.");
+              return;
+            }
+            const pin = await openPinModal({
+              title: "Unlock note",
+              message: "Enter your 4-digit PIN to view this note."
+            });
+            if (!pin) return;
+            const ok = await verifyPin(pin);
+            if (!ok) { alert("Incorrect PIN."); return; }
+          }
+          openEditor(note.id);
+        });
+
+        container.appendChild(item);
+      });
+    }
+
+    function getNoteById(id) {
+      return notes.find(n => n.id === id) || null;
+    }
+
+    function updateEditorStatusUI(note) {
+      const modeLabel = document.getElementById("editorModeLabel");
+      const lockHint = document.getElementById("editorLockHint");
+      if (!note) {
+        modeLabel.textContent = "New note";
+        lockHint.textContent = "Not locked";
+      } else {
+        modeLabel.textContent = "Editing note";
+        lockHint.textContent = note.locked
+          ? "Locked · PIN required"
+          : "Not locked";
+      }
+    }
+
+    function highlightSelectedColor(colorKey) {
+      document.querySelectorAll(".color-dot").forEach(dot => {
+        dot.classList.toggle("active", dot.dataset.color === colorKey);
+      });
+    }
+
+    function getCurrentSelectedColor() {
+      const active = document.querySelector(".color-dot.active");
+      return active ? active.dataset.color : "blue";
+    }
+
+    function applySelectedColorToNote() {
+      if (!currentNoteId) return;
+      const note = getNoteById(currentNoteId);
+      if (!note) return;
+      note.color = getCurrentSelectedColor();
+      note.updatedAt = Date.now();
+      saveNotesToLocalStorage();
+      renderNotesList();
+    }
+
+    function openEditor(noteId) {
+      const titleInput = document.getElementById("noteTitleInput");
+      const contentEditable = document.getElementById("noteContentEditable");
+      const editorTitle = document.getElementById("editorTitleBarText");
+      const subTitle = document.getElementById("editorSubTitle");
+      const lockIcon = document.getElementById("lockToggleIcon");
+      const colorPopover = document.getElementById("colorPopover");
+      colorPopover.classList.remove("visible");
+
+      if (noteId) {
+        const note = getNoteById(noteId);
+        if (!note) return;
+        currentNoteId = noteId;
+        titleInput.value = note.title || "";
+        contentEditable.innerHTML = note.contentHtml || "";
+        editorTitle.textContent = "Edit Note";
+        subTitle.textContent = note.locked
+          ? "Locked · Actions require PIN" : "Auto-saves on exit";
+        lockIcon.classList.toggle("fa-lock", note.locked);
+        lockIcon.classList.toggle("fa-lock-open", !note.locked);
+        highlightSelectedColor(note.color || "blue");
+        updateEditorStatusUI(note);
+      } else {
+        currentNoteId = null;
+        titleInput.value = "";
+        contentEditable.innerHTML = "";
+        editorTitle.textContent = "New Note";
+        subTitle.textContent = "Auto-saves on exit";
+        lockIcon.classList.remove("fa-lock");
+        lockIcon.classList.add("fa-lock-open");
+        highlightSelectedColor("blue");
+        updateEditorStatusUI(null);
+      }
+
+      showEditor();
+      titleInput.focus();
+    }
+
+    function closeEditorAndSave() {
+      const titleInput = document.getElementById("noteTitleInput");
+      const contentEditable = document.getElementById("noteContentEditable");
+      const title = titleInput.value.trim();
+      const contentHtml = contentEditable.innerHTML.trim();
+      const plain = htmlToPlainText(contentHtml).trim();
+      const now = Date.now();
+
+      if (!currentNoteId && !title && !plain) {
+        hideEditor();
+        currentNoteId = null;
+        renderNotesList();
+        return;
+      }
+
+      if (currentNoteId) {
+        const n = getNoteById(currentNoteId);
+        if (n) {
+          n.title = title || n.title;
+          n.contentHtml = contentHtml;
+          n.updatedAt = now;
+          updateEditorStatusUI(n);
+        }
+      } else {
+        const newNote = {
+          id: generateId(),
+          title: title || "Untitled",
+          contentHtml,
+          color: getCurrentSelectedColor(),
+          locked: false,
+          createdAt: now,
+          updatedAt: now
+        };
+        notes.push(newNote);
+        currentNoteId = newNote.id;
+        updateEditorStatusUI(newNote);
+      }
+
+      saveNotesToLocalStorage();
+      hideEditor();
+      currentNoteId = null;
+      renderNotesList();
+    }
+
+    async function deleteCurrentNote() {
+      if (!currentNoteId) { hideEditor(); return; }
+      const note = getNoteById(currentNoteId);
+      if (!note) { hideEditor(); return; }
+
+      if (note.locked && hasPin()) {
+        const pin = await openPinModal({
+          title: "Delete locked note",
+          message: "Enter your PIN to delete this locked note."
+        });
+        if (!pin) return;
+        const ok = await verifyPin(pin);
+        if (!ok) { alert("Incorrect PIN."); return; }
+      }
+
+      const confirmed = await openConfirmModal({
+        title: "Delete note",
+        message: "Delete this note permanently?",
+        confirmLabel: "Delete",
+        cancelLabel: "Cancel"
+      });
+      if (!confirmed) return;
+
+      notes = notes.filter(n => n.id !== currentNoteId);
+      saveNotesToLocalStorage();
+      hideEditor();
+      currentNoteId = null;
+      renderNotesList();
+    }
+
+    async function toggleLockCurrentNote() {
+      if (!currentNoteId) { alert("Save the note first before locking."); return; }
+      const note = getNoteById(currentNoteId);
+      if (!note) return;
+      if (!hasPin()) { alert("Set a 4-digit PIN in Settings first."); return; }
+
+      const isLocking = !note.locked;
+      const pin = await openPinModal({
+        title: isLocking ? "Lock note" : "Unlock note",
+        message: "Enter your PIN to " + (isLocking ? "lock" : "unlock") + " this note."
+      });
+      if (!pin) return;
+      const ok = await verifyPin(pin);
+      if (!ok) { alert("Incorrect PIN."); return; }
+
+      note.locked = isLocking;
+      note.updatedAt = Date.now();
+      saveNotesToLocalStorage();
+
+      const lockIcon = document.getElementById("lockToggleIcon");
+      lockIcon.classList.toggle("fa-lock", note.locked);
+      lockIcon.classList.toggle("fa-lock-open", !note.locked);
+      document.getElementById("editorSubTitle").textContent = note.locked
+        ? "Locked · Actions require PIN"
+        : "Auto-saves on exit";
+      updateEditorStatusUI(note);
+      renderNotesList();
+    }
+
+    async function exportCurrentNote() {
+      if (!currentNoteId) { alert("Nothing to export yet."); return; }
+      const note = getNoteById(currentNoteId);
+      if (!note) return;
+
+      if (note.locked && hasPin()) {
+        const pin = await openPinModal({
+          title: "Export locked note",
+          message: "Enter your PIN to export this locked note."
+        });
+        if (!pin) return;
+        const ok = await verifyPin(pin);
+        if (!ok) { alert("Incorrect PIN."); return; }
+      }
+
+      const title = (note.title || "note").trim() || "note";
+      const base = title.toLowerCase().replace(/[^\w]+/g,"-").replace(/^-+|-+$/g,"");
+      const fileName = (base || "note") + ".txt";
+      const plain = htmlToPlainText(note.contentHtml || "");
+      const blob = new Blob([note.title + "\n\n" + plain], {type:"text/plain;charset=utf-8"});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url; a.download = fileName;
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    function copyCurrentEditorText() {
+      const title = document.getElementById("noteTitleInput").value || "";
+      const contentHtml = document.getElementById("noteContentEditable").innerHTML || "";
+      const plain = htmlToPlainText(contentHtml);
+      const text = (title ? title + "\n\n" : "") + plain;
+      if (!text.trim()) {
+        showToast("Nothing to copy");
+        return;
+      }
+      if (navigator.clipboard?.writeText) {
+        navigator.clipboard.writeText(text).then(
+          () => showToast("Note copied"),
+          () => fallbackCopy(text)
+        );
+      } else {
+        fallbackCopy(text);
+      }
+    }
+
+    function fallbackCopy(text) {
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand("copy");
+      document.body.removeChild(ta);
+      showToast("Note copied");
+    }
+
+    async function handlePinSetup() {
+      const currentInput = document.getElementById("pinCurrentInput");
+      const newInput = document.getElementById("pinNewInput");
+      const currentPin = (currentInput.value || "").trim();
+      const newPin = (newInput.value || "").trim();
+
+      if (!/^\d{4}$/.test(newPin)) {
+        alert("Please enter a valid 4-digit NEW PIN.");
+        return;
+      }
+
+      if (hasPin()) {
+        if (!/^\d{4}$/.test(currentPin)) {
+          alert("Please enter your CURRENT 4-digit PIN.");
+          return;
+        }
+        const ok = await verifyPin(currentPin);
+        if (!ok) { alert("Current PIN is incorrect."); return; }
+        if (currentPin === newPin) {
+          alert("New PIN must be different from current PIN.");
+          return;
+        }
+      }
+
+      const ok = await setPin(newPin);
+      if (ok) {
+        currentInput.value = "";
+        newInput.value = "";
+        updatePinStatusText();
+        alert("PIN updated successfully.");
+      }
+    }
+
+    async function handlePinTest() {
+      if (!hasPin()) { alert("No PIN configured yet."); return; }
+      const pin = await openPinModal({
+        title: "Test PIN",
+        message: "Enter your 4-digit PIN to confirm it."
+      });
+      if (!pin) return;
+      const ok = await verifyPin(pin);
+      alert(ok ? "PIN correct!" : "Incorrect PIN.");
+    }
+
+    async function handlePinClear() {
+      if (!hasPin()) { alert("No PIN configured."); return; }
+      const pin = await openPinModal({
+        title: "Clear PIN",
+        message: "Enter your current PIN to remove it and unlock all notes."
+      });
+      if (!pin) return;
+      const ok = await verifyPin(pin);
+      if (!ok) { alert("Incorrect PIN."); return; }
+
+      notes.forEach(n => { n.locked = false; });
+      saveNotesToLocalStorage();
+      pinHash = null;
+      savePinHashToLocalStorage();
+      updatePinStatusText();
+      alert("PIN cleared. All notes are now unlocked.");
+      renderNotesList();
+    }
+
+    function bindEvents() {
+      const menuButton = document.getElementById("menuButton");
+      const drawerBackdrop = document.getElementById("drawerBackdrop");
+      const drawer = document.getElementById("settingsDrawer");
+      const themeToggle = document.getElementById("themeToggle");
+      const fabAdd = document.getElementById("fabAdd");
+      const editorBackButton = document.getElementById("editorBackButton");
+      const deleteButton = document.getElementById("deleteButton");
+      const lockToggleButton = document.getElementById("lockToggleButton");
+      const exportButton = document.getElementById("exportButton");
+      const colorPickerButton = document.getElementById("colorPickerButton");
+      const colorPopover = document.getElementById("colorPopover");
+      const viewToggleButton = document.getElementById("viewToggleButton");
+      const searchInput = document.getElementById("searchInput");
+      const searchFocusButton = document.getElementById("searchFocusButton");
+      const boldButton = document.getElementById("boldButton");
+      const italicButton = document.getElementById("italicButton");
+      const contentEditable = document.getElementById("noteContentEditable");
+      const copyNoteButton = document.getElementById("copyNoteButton");
+      const btnSetPin = document.getElementById("btnSetPin");
+      const btnTestPin = document.getElementById("btnTestPin");
+      const btnClearPin = document.getElementById("btnClearPin");
+
+      const openDrawer = () => { drawer.classList.add("visible"); drawerBackdrop.classList.add("visible"); };
+      const closeDrawer = () => { drawer.classList.remove("visible"); drawerBackdrop.classList.remove("visible"); };
+      menuButton.addEventListener("click", openDrawer);
+      drawerBackdrop.addEventListener("click", closeDrawer);
+
+      themeToggle.addEventListener("change", () => {
+        currentTheme = themeToggle.checked ? "dark" : "light";
+        applyTheme();
+        saveThemeToLocalStorage();
+      });
+
+      viewToggleButton.addEventListener("click", () => {
+        currentViewMode = currentViewMode === "list" ? "card" : "list";
+        applyViewModeUI();
+        saveViewModeToLocalStorage();
+        renderNotesList();
+      });
+
+      searchInput.addEventListener("input", renderNotesList);
+      searchFocusButton.addEventListener("click", () => searchInput.focus());
+
+      fabAdd.addEventListener("click", () => openEditor(null));
+      editorBackButton.addEventListener("click", closeEditorAndSave);
+      deleteButton.addEventListener("click", deleteCurrentNote);
+      lockToggleButton.addEventListener("click", toggleLockCurrentNote);
+      exportButton.addEventListener("click", exportCurrentNote);
+      copyNoteButton.addEventListener("click", copyCurrentEditorText);
+
+      colorPickerButton.addEventListener("click", e => {
+        e.stopPropagation();
+        const rect = colorPickerButton.getBoundingClientRect();
+        colorPopover.style.top = rect.bottom + 4 + "px";
+        colorPopover.style.right = (window.innerWidth - rect.right) + 24 + "px";
+        colorPopover.classList.toggle("visible");
+      });
+
+      document.addEventListener("click", e => {
+        if (!colorPopover.contains(e.target) && e.target !== colorPickerButton) {
+          colorPopover.classList.remove("visible");
+        }
+      });
+
+      document.querySelectorAll(".color-dot").forEach(dot => {
+        dot.addEventListener("click", () => {
+          highlightSelectedColor(dot.dataset.color);
+          applySelectedColorToNote();
+        });
+      });
+
+      const applyFormat = (command, btn) => {
+        document.execCommand(command, false, null);
+        contentEditable.focus();
+        btn.classList.add("active");
+        setTimeout(() => btn.classList.remove("active"), 150);
+      };
+      boldButton.addEventListener("click", () => applyFormat("bold", boldButton));
+      italicButton.addEventListener("click", () => applyFormat("italic", italicButton));
+
+      document.addEventListener("keydown", e => {
+        if ((e.metaKey || e.ctrlKey) && !e.shiftKey && (e.key === "b" || e.key === "i")) {
+          if (!document.getElementById("editorScreen").classList.contains("visible")) return;
+          e.preventDefault();
+          if (e.key === "b") applyFormat("bold", boldButton);
+          else applyFormat("italic", italicButton);
+        }
+      });
+
+      btnSetPin.addEventListener("click", handlePinSetup);
+      btnTestPin.addEventListener("click", handlePinTest);
+      btnClearPin.addEventListener("click", handlePinClear);
+    }
+
+    function initApp() {
+      loadFromLocalStorage();
+      applyTheme();
+      applyViewModeUI();
+      updatePinStatusText();
+      bindEvents();
+      renderNotesList();
+    }
+
+    document.addEventListener("DOMContentLoaded", initApp);
+  </script>
+</body>
+</html>
